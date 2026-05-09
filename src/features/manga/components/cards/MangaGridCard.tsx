@@ -23,6 +23,7 @@ import { TypographyMaxLines } from '@/base/components/texts/TypographyMaxLines.t
 import { MANGA_COVER_ASPECT_RATIO } from '@/features/manga/Manga.constants.ts';
 import { GridLayout } from '@/base/Base.types.ts';
 import { MediaQuery } from '@/base/utils/MediaQuery.tsx';
+import { useMangaCardContextMenu } from '@/features/manga/hooks/useMangaCardContextMenu.ts';
 
 const BottomGradient = styled('div')({
     position: 'absolute',
@@ -56,8 +57,8 @@ export const MangaGridCard = memo(
         mangaBadges,
         mode,
     }: SpecificMangaCardProps) => {
-        const preventMobileContextMenu = MediaQuery.usePreventMobileContextMenu();
         const optionButtonRef = useRef<HTMLButtonElement>(null);
+        const handleContextMenu = useMangaCardContextMenu(popupState, optionButtonRef);
 
         const { id, title } = manga;
 
@@ -68,7 +69,7 @@ export const MangaGridCard = memo(
                 onClick={handleClick}
                 to={mangaLinkTo}
                 state={Mangas.createLocationState(manga, mode)}
-                onContextMenu={preventMobileContextMenu}
+                onContextMenu={handleContextMenu}
                 sx={{
                     ...MediaQuery.preventMobileContextMenuSx(),
                     textDecoration: 'none',
