@@ -718,10 +718,6 @@ msgstr "Categories"
 msgid "Category"
 msgstr "Category"
 
-#: src/features/library/components/CategorySection.tsx
-msgid "Category is empty"
-msgstr "Category is empty"
-
 #: src/features/category/components/CreateOrEditCategoryDialog.tsx
 msgid "Category Name"
 msgstr "Category Name"
@@ -853,7 +849,7 @@ msgstr "Close"
 msgid "Cloudflare bypass"
 msgstr "Cloudflare bypass"
 
-#: src/features/library/components/CategorySection.tsx
+#: src/features/library/components/CategoryHeader.tsx
 msgid "Collapse category"
 msgstr "Collapse category"
 
@@ -1015,7 +1011,6 @@ msgstr "Could not load language"
 msgid "Could not load latest track info from tracker"
 msgstr "Could not load latest track info from tracker"
 
-#: src/features/library/components/CategorySection.tsx
 #: src/features/manga/screens/Manga.tsx
 msgid "Could not load manga"
 msgstr "Could not load manga"
@@ -1551,7 +1546,7 @@ msgstr "Exit to manga page"
 msgid "Exit to previous page"
 msgstr "Exit to previous page"
 
-#: src/features/library/components/CategorySection.tsx
+#: src/features/library/components/CategoryHeader.tsx
 msgid "Expand category"
 msgstr "Expand category"
 
@@ -2464,7 +2459,6 @@ msgstr "No downloads"
 msgid "No manga found"
 msgstr "No manga found"
 
-#: src/features/library/components/LibraryMangaGrid.tsx
 #: src/features/source/browse/screens/SourceMangas.tsx
 msgid "No manga matches this filter"
 msgstr "No manga matches this filter"
@@ -3455,10 +3449,6 @@ msgstr "The address of the FlareSolverr server"
 #: src/features/settings/screens/ImagesSettings.tsx
 msgid "The cache of the client (browser, electron) should get cleared alongside it, otherwise, the client cache will keep getting used"
 msgstr "The cache of the client (browser, electron) should get cleared alongside it, otherwise, the client cache will keep getting used"
-
-#: src/features/library/components/CategorySection.tsx
-msgid "The category is empty"
-msgstr "The category is empty"
 
 #: src/features/backup/component/BackupValidationDialog.tsx
 msgid "The following sources are not installed:"
