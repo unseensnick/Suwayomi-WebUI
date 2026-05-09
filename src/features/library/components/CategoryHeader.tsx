@@ -6,6 +6,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -13,6 +14,8 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useLingui } from '@lingui/react/macro';
 import { memo } from 'react';
+import { CategorySortMenu } from '@/features/library/components/CategorySortMenu.tsx';
+import { CategoryRefreshButton } from '@/features/library/components/CategoryRefreshButton.tsx';
 import type { GetCategoriesLibraryQuery } from '@/lib/graphql/generated/graphql.ts';
 
 type Category = NonNullable<GetCategoriesLibraryQuery['categories']>['nodes'][number];
@@ -80,6 +83,9 @@ export const CategoryHeader = memo(
                 >
                     {visibleCount === totalCount ? `${totalCount}` : `${visibleCount} / ${totalCount}`}
                 </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <CategorySortMenu category={category} />
+                <CategoryRefreshButton categoryId={category.id} />
             </Stack>
         );
     },

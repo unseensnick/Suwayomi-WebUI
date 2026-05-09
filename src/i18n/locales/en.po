@@ -965,6 +965,7 @@ msgstr ""
 msgid "Could not check for update"
 msgstr "Could not check for update"
 
+#: src/features/library/components/CategoryRefreshButton.tsx
 #: src/features/updates/components/UpdateChecker.tsx
 msgid "Could not check for updates"
 msgstr "Could not check for updates"
@@ -1094,6 +1095,10 @@ msgstr "Could not search source"
 #: src/features/updates/components/UpdateChecker.tsx
 msgid "Could not stop global update"
 msgstr "Could not stop global update"
+
+#: src/features/library/components/CategoryRefreshButton.tsx
+msgid "Could not stop update"
+msgstr "Could not stop update"
 
 #: src/features/manga/Manga.constants.ts
 #: src/features/tracker/components/TrackerSearch.tsx
@@ -2799,6 +2804,10 @@ msgstr "Red"
 msgid "Refresh"
 msgstr "Refresh"
 
+#: src/features/library/components/CategoryRefreshButton.tsx
+msgid "Refresh this category"
+msgstr "Refresh this category"
+
 #: src/features/tracker/Tracker.constants.ts
 msgid "Releasing"
 msgstr "Releasing"
@@ -3302,9 +3311,14 @@ msgstr ""
 "An error occurred that we cannot recover from"
 
 #: src/features/chapter/components/ChapterOptions.tsx
+#: src/features/library/components/CategorySortMenu.tsx
 #: src/features/library/components/LibraryOptionsPanel.tsx
 msgid "Sort"
 msgstr "Sort"
+
+#: src/features/library/components/CategorySortMenu.tsx
+msgid "Sort category"
+msgstr "Sort category"
 
 #: src/features/browse/screens/Browse.tsx
 #: src/features/browse/screens/BrowseSettings.tsx
@@ -3383,6 +3397,10 @@ msgstr "Stop"
 #: src/features/updates/components/UpdateChecker.tsx
 msgid "Stop global update"
 msgstr "Stop global update"
+
+#: src/features/library/components/CategoryRefreshButton.tsx
+msgid "Stop update"
+msgstr "Stop update"
 
 #: src/features/reader/overlay/navigation/desktop/quick-settings/components/ReaderNavBarDesktopPageScale.tsx
 #: src/features/reader/settings/layout/components/ReaderSettingStretchPage.tsx
