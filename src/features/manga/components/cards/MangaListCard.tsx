@@ -43,7 +43,7 @@ export const MangaListCard = memo(
         const { id, title } = manga;
 
         return (
-            <Card>
+            <Card sx={{ display: 'flex', alignItems: 'stretch' }}>
                 <CardActionArea
                     component={RouterLink}
                     to={mangaLinkTo}
@@ -53,6 +53,8 @@ export const MangaListCard = memo(
                     onContextMenu={handleContextMenu}
                     sx={{
                         ...MediaQuery.preventMobileContextMenuSx(),
+                        flex: 1,
+                        minWidth: 0,
                         '@media (hover: hover) and (pointer: fine)': {
                             '&:hover .manga-option-button': {
                                 visibility: 'visible',
@@ -69,7 +71,6 @@ export const MangaListCard = memo(
                 >
                     <ListCardContent
                         sx={{
-                            justifyContent: 'space-between',
                             position: 'relative',
                         }}
                     >
@@ -99,26 +100,27 @@ export const MangaListCard = memo(
                                 </TypographyMaxLines>
                             </CustomTooltip>
                         </Box>
-                        <Stack
-                            direction="row"
-                            sx={{
-                                alignItems: 'center',
-                                gap: 0.5,
-                            }}
-                        >
-                            {mangaBadges}
-                            {continueReadingButton}
-                            <MangaOptionButton
-                                ref={optionButtonRef}
-                                popupState={popupState}
-                                id={id}
-                                selected={selected}
-                                handleSelection={handleSelection}
-                                asCheckbox
-                            />
-                        </Stack>
                     </ListCardContent>
                 </CardActionArea>
+                <Stack
+                    direction="row"
+                    sx={{
+                        alignItems: 'center',
+                        gap: 0.5,
+                        pr: 1,
+                    }}
+                >
+                    {mangaBadges}
+                    {continueReadingButton}
+                    <MangaOptionButton
+                        ref={optionButtonRef}
+                        popupState={popupState}
+                        id={id}
+                        selected={selected}
+                        handleSelection={handleSelection}
+                        asCheckbox
+                    />
+                </Stack>
             </Card>
         );
     },

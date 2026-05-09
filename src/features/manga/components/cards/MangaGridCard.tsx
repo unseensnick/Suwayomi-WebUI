@@ -103,6 +103,7 @@ export const MangaGridCard = memo(
                             // force standard aspect ratio of manga covers
                             aspectRatio: MANGA_COVER_ASPECT_RATIO,
                             display: 'flex',
+                            position: 'relative',
                         }}
                     >
                         <CardActionArea
@@ -137,21 +138,12 @@ export const MangaGridCard = memo(
                                 direction="row"
                                 sx={{
                                     alignItems: 'start',
-                                    justifyContent: 'space-between',
                                     position: 'absolute',
                                     top: (theme) => theme.spacing(1),
                                     left: (theme) => theme.spacing(1),
-                                    right: (theme) => theme.spacing(1),
                                 }}
                             >
                                 {mangaBadges}
-                                <MangaOptionButton
-                                    ref={optionButtonRef}
-                                    popupState={popupState}
-                                    id={id}
-                                    selected={selected}
-                                    handleSelection={handleSelection}
-                                />
                             </Stack>
                             <>
                                 {gridLayout !== GridLayout.Comfortable && (
@@ -189,6 +181,22 @@ export const MangaGridCard = memo(
                                 </Stack>
                             </>
                         </CardActionArea>
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: (theme) => theme.spacing(1),
+                                right: (theme) => theme.spacing(1),
+                                zIndex: 1,
+                            }}
+                        >
+                            <MangaOptionButton
+                                ref={optionButtonRef}
+                                popupState={popupState}
+                                id={id}
+                                selected={selected}
+                                handleSelection={handleSelection}
+                            />
+                        </Box>
                     </Card>
                     {gridLayout === GridLayout.Comfortable && (
                         <Stack sx={{ pb: 1 }}>
