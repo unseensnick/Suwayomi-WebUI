@@ -27,6 +27,7 @@ import { GET_CATEGORIES_LIBRARY } from '@/lib/graphql/category/CategoryQuery.ts'
 import type { GetCategoriesLibraryQuery, GetCategoriesLibraryQueryVariables } from '@/lib/graphql/generated/graphql.ts';
 import { requestManager } from '@/lib/requests/RequestManager.ts';
 import { useNavBarContext } from '@/features/navigation-bar/NavbarContext.tsx';
+import { LibraryScrollService } from '@/features/library/services/LibraryScrollService.ts';
 
 /**
  * Library categories rendered as a vertical list inside the desktop sidebar.
@@ -141,11 +142,12 @@ export const CategoryNavList = () => {
                     const mark = (category.name.trim()[0] ?? '?').toUpperCase();
                     const handleClick = (e: React.MouseEvent) => {
                         if (isOnLibrary) {
-                            const target = document.getElementById(`cat-${category.id}`);
-                            if (target) {
-                                e.preventDefault();
-                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
+                            // Library is mounted: ask it to scroll its
+                            // GroupedVirtuoso to this category's group header.
+                            // Falls back to the link's default navigation if
+                            // no handler is registered (race during mount).
+                            const handled = LibraryScrollService.scrollToCategory(category.id);
+                            if (handled) {e.preventDefault();}
                         }
                     };
                     return (
