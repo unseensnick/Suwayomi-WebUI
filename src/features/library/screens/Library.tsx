@@ -8,10 +8,9 @@
 
 import type { ChipProps } from '@mui/material/Chip';
 import Chip from '@mui/material/Chip';
-import Tab from '@mui/material/Tab';
 import { styled, useTheme } from '@mui/material/styles';
 import { useCallback, useMemo, useState } from 'react';
-import { useQueryParam, NumberParam, StringParam } from 'use-query-params';
+import { useQueryParam, StringParam } from 'use-query-params';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
@@ -20,18 +19,14 @@ import { plural } from '@lingui/core/macro';
 import { requestManager } from '@/lib/requests/RequestManager.ts';
 import { EmptyViewAbsoluteCentered } from '@/base/components/feedback/EmptyViewAbsoluteCentered.tsx';
 import { LoadingPlaceholder } from '@/base/components/feedback/LoadingPlaceholder.tsx';
-import { TabPanel } from '@/base/components/tabs/TabPanel.tsx';
 import { LibraryToolbarMenu } from '@/features/library/components/LibraryToolbarMenu.tsx';
-import { LibraryMangaGrid } from '@/features/library/components/LibraryMangaGrid.tsx';
+import { CategorySection } from '@/features/library/components/CategorySection.tsx';
 import { AppbarSearch } from '@/base/components/AppbarSearch.tsx';
 import { UpdateChecker } from '@/features/updates/components/UpdateChecker.tsx';
 import { useSelectableCollection } from '@/base/collection/hooks/useSelectableCollection.ts';
 import { SelectableCollectionSelectMode } from '@/base/collection/components/SelectableCollectionSelectMode.tsx';
-import { useGetVisibleLibraryMangas } from '@/features/library/hooks/useGetVisibleLibraryMangas.ts';
 import { SelectionFAB } from '@/base/collection/components/SelectionFAB.tsx';
 import { MangaActionMenuItems } from '@/features/manga/components/MangaActionMenuItems.tsx';
-import { TabsMenu } from '@/base/components/tabs/TabsMenu.tsx';
-import { TabsWrapper } from '@/base/components/tabs/TabsWrapper.tsx';
 import { defaultPromiseErrorHandler } from '@/lib/DefaultPromiseErrorHandler.ts';
 import type {
     GetCategoriesLibraryQuery,
@@ -61,6 +56,15 @@ const TitleSizeTag = ({ sx, ...props }: ChipProps) => (
     <Chip {...props} size="small" sx={{ ...sx, marginLeft: '5px' }} />
 );
 
+/**
+ * Stacked-categories library — renders every category as its own section,
+ * top-to-bottom. Replaces the previous tab strip; sidebar's CategoryNavList
+ * jumps to a specific section anchor (#cat-<id>) instead of swapping tabs.
+ *
+ * The toolbar menu (filter / sort) targets the first category as a stable
+ * placeholder; per-category sort controls land in a follow-up PR alongside
+ * scrollspy that pins the toolbar to the section in view.
+ */
 export function Library() {
     const { t } = useLingui();
     const theme = useTheme();
@@ -77,10 +81,14 @@ export function Library() {
     } = requestManager.useGetCategories<GetCategoriesLibraryQuery, GetCategoriesLibraryQueryVariables>(
         GET_CATEGORIES_LIBRARY,
     );
-    const tabsData = categoriesResponse?.categories.nodes.filter(
-        (category) => category.id !== 0 || (category.id === 0 && category.mangas.totalCount),
+    // Same filter the tab model used: hide id=0 ("Default") when empty.
+    const categories = useMemo(
+        () =>
+            categoriesResponse?.categories.nodes.filter(
+                (category) => category.id !== 0 || (category.id === 0 && category.mangas.totalCount),
+            ) ?? STABLE_EMPTY_ARRAY,
+        [categoriesResponse],
     );
-    const tabs = tabsData ?? STABLE_EMPTY_ARRAY;
 
     const librarySizeResponse = requestManager.useGetMangas<
         GetLibraryMangaCountQuery,
@@ -89,32 +97,26 @@ export function Library() {
 
     const librarySize = librarySizeResponse.data?.mangas.totalCount ?? 0;
 
-    const [tabSearchParam, setTabSearchParam] = useQueryParam(SearchParam.TAB, NumberParam);
     const [query] = useQueryParam(SearchParam.QUERY, StringParam);
 
-    const activeTab: (typeof tabs)[number] | undefined = tabs.find((tab) => tab.id === tabSearchParam) ?? tabs[0];
+    // Each section reports its visible mangaIds so we can compose a single
+    // selection state across the whole stack (Yokai pattern: bulk selection
+    // is global, not per-section).
+    const [mangaIdsByCategory, setMangaIdsByCategory] = useState<Record<number, MangaType['id'][]>>({});
+    const handleMangasChange = useCallback((categoryId: number, mangaIds: MangaType['id'][]) => {
+        setMangaIdsByCategory((prev) => {
+            const existing = prev[categoryId];
+            if (existing && existing.length === mangaIds.length && existing.every((v, i) => v === mangaIds[i])) {
+                return prev;
+            }
+            return { ...prev, [categoryId]: mangaIds };
+        });
+    }, []);
 
-    const {
-        data: categoryMangaResponse,
-        error: mangaError,
-        loading: mangaLoading,
-        refetch: refetchCategoryMangas,
-    } = requestManager.useGetCategoryMangas(activeTab?.id, { skip: !activeTab });
-    const categoryMangas = categoryMangaResponse?.mangas.nodes ?? STABLE_EMPTY_ARRAY;
-    const {
-        visibleMangas: mangas,
-        showFilteredOutMessage,
-        filterKey,
-    } = useGetVisibleLibraryMangas(categoryMangas, activeTab);
-
-    const retryFetchCategoryMangas = useCallback(
-        () => refetchCategoryMangas().catch(defaultPromiseErrorHandler('Library::refetchCategoryMangas')),
-        [refetchCategoryMangas, activeTab],
-    );
-
-    const mangaIds = useMemo(() => mangas.map((manga) => manga.id), [mangas]);
+    const allMangaIds = useMemo(() => [...new Set(Object.values(mangaIdsByCategory).flat())], [mangaIdsByCategory]);
 
     const [isSelectModeActive, setIsSelectModeActive] = useState(false);
+    const SELECTION_KEY = 'library';
     const {
         areNoItemsForKeySelected: areNoItemsSelected,
         areAllItemsForKeySelected: areAllItemsSelected,
@@ -122,9 +124,9 @@ export function Library() {
         handleSelectAll,
         handleSelection,
         clearSelection,
-    } = useSelectableCollection<MangaType['id'], string>(mangas.length, {
-        itemIds: mangaIds,
-        currentKey: activeTab?.id.toString(),
+    } = useSelectableCollection<MangaType['id'], string>(allMangaIds.length, {
+        itemIds: allMangaIds,
+        currentKey: SELECTION_KEY,
         initialState: undefined,
     });
 
@@ -133,7 +135,7 @@ export function Library() {
             setIsSelectModeActive(!!(selectedItemIds.length + (selected ? 1 : -1)));
             handleSelection(id, selected, selectOptions);
         },
-        [setIsSelectModeActive, handleSelection],
+        [setIsSelectModeActive, handleSelection, selectedItemIds.length],
     );
 
     const selectedMangas = useMemo(
@@ -147,7 +149,7 @@ export function Library() {
                     ),
                 )
                 .filter((manga) => !!manga),
-        [selectedItemIds.length, mangas],
+        [selectedItemIds],
     );
 
     const selectionFab = useMemo(() => {
@@ -170,7 +172,7 @@ export function Library() {
                 )}
             </SelectionFAB>
         );
-    }, [isSelectModeActive, selectedMangas]);
+    }, [isSelectModeActive, selectedMangas, selectedItemIds.length, clearSelection]);
 
     const triggerGlobalSearchButton = useMemo(
         () =>
@@ -186,8 +188,14 @@ export function Library() {
                     </Button>
                 </Box>
             ),
-        [query],
+        [query, t],
     );
+
+    // Toolbar-menu target: first category as a placeholder until per-section
+    // scrollspy lands. The toolbar still works — it just always edits the
+    // first category's filter/sort metadata. Per-category settings remain
+    // editable from Settings → Categories.
+    const [toolbarCategory] = categories;
 
     useAppTitle(
         <TitleWithSizeTag>
@@ -204,39 +212,33 @@ export function Library() {
     );
     useAppAction(
         <>
-            {!isSelectModeActive && activeTab && (
+            {!isSelectModeActive && toolbarCategory && (
                 <>
                     <AppbarSearch />
-                    <LibraryToolbarMenu category={activeTab} />
-                    <UpdateChecker categoryId={activeTab?.id} />
+                    <LibraryToolbarMenu category={toolbarCategory} />
+                    <UpdateChecker categoryId={toolbarCategory.id} />
                 </>
             )}
-            {!!mangas.length && (
+            {!!allMangaIds.length && (
                 <SelectableCollectionSelectMode
                     isActive={isSelectModeActive}
                     areAllItemsSelected={areAllItemsSelected}
                     areNoItemsSelected={areNoItemsSelected}
-                    onSelectAll={(selectAll) =>
-                        handleSelectAll(selectAll, [...new Set(mangas.map((manga) => manga.id))])
-                    }
+                    onSelectAll={(selectAll) => handleSelectAll(selectAll, allMangaIds)}
                     onModeChange={(checked) => {
                         setIsSelectModeActive(checked);
 
                         if (checked) {
-                            handleSelectAll(true, [...new Set(mangas.map((manga) => manga.id))]);
+                            handleSelectAll(true, allMangaIds);
                         } else {
-                            tabs.forEach((tab) => handleSelectAll(false, [], tab.id.toString()));
+                            handleSelectAll(false, []);
                         }
                     }}
                 />
             )}
         </>,
-        [isSelectModeActive, areNoItemsSelected, areAllItemsSelected, activeTab, mangas.length],
+        [isSelectModeActive, areNoItemsSelected, areAllItemsSelected, toolbarCategory, allMangaIds, handleSelectAll],
     );
-
-    const handleTabChange = (newTab: number) => {
-        setTabSearchParam(newTab);
-    };
 
     if (tabsError != null || librarySizeResponse.error) {
         return (
@@ -260,70 +262,24 @@ export function Library() {
         return <LoadingPlaceholder />;
     }
 
-    if (tabs.length === 0) {
+    if (categories.length === 0) {
         return <EmptyViewAbsoluteCentered message={t`Your library is empty`} />;
     }
 
-    if (tabs.length === 1) {
-        return (
-            <>
-                {triggerGlobalSearchButton}
-                <LibraryMangaGrid
-                    // the key needs to include filters and query to force a re-render of the virtuoso grid to prevent https://github.com/petyosi/react-virtuoso/issues/1242
-                    key={filterKey}
-                    mangas={mangas}
-                    message={mangaError ? t`Could not load manga` : t`Your library is empty`}
-                    messageExtra={mangaError?.message}
-                    isLoading={mangaLoading}
-                    selectedMangaIds={selectedItemIds}
-                    isSelectModeActive={isSelectModeActive}
-                    handleSelection={handleSelect}
-                    showFilteredOutMessage={!mangaError && showFilteredOutMessage}
-                    retry={mangaError && retryFetchCategoryMangas}
-                />
-                {selectionFab}
-            </>
-        );
-    }
-
     return (
-        <TabsWrapper>
-            <TabsMenu value={activeTab.id} onChange={(e, newTab) => handleTabChange(newTab)}>
-                {tabs.map((tab) => (
-                    <Tab
-                        sx={{ flexGrow: 1, maxWidth: 'unset' }}
-                        key={tab.id}
-                        label={
-                            <TitleWithSizeTag>
-                                {tab.name}
-                                {showTabSize ? <TitleSizeTag label={tab.mangas.totalCount} /> : null}
-                            </TitleWithSizeTag>
-                        }
-                        value={tab.id}
-                    />
-                ))}
-            </TabsMenu>
+        <>
             {triggerGlobalSearchButton}
-            {tabs.map((tab) => (
-                <TabPanel key={tab.order} index={tab.order} currentIndex={activeTab.order}>
-                    {tab === activeTab && (
-                        <LibraryMangaGrid
-                            // the key needs to include filters and query to force a re-render of the virtuoso grid to prevent https://github.com/petyosi/react-virtuoso/issues/1242
-                            key={filterKey}
-                            mangas={mangas}
-                            message={mangaError ? t`Could not load manga` : t`The category is empty`}
-                            messageExtra={mangaError?.message}
-                            isLoading={mangaLoading}
-                            selectedMangaIds={selectedItemIds}
-                            isSelectModeActive={isSelectModeActive}
-                            handleSelection={handleSelect}
-                            showFilteredOutMessage={!mangaError && showFilteredOutMessage}
-                            retry={mangaError && retryFetchCategoryMangas}
-                        />
-                    )}
-                </TabPanel>
+            {categories.map((category) => (
+                <CategorySection
+                    key={category.id}
+                    category={category}
+                    isSelectModeActive={isSelectModeActive}
+                    selectedMangaIds={selectedItemIds}
+                    handleSelection={handleSelect}
+                    onMangasChange={handleMangasChange}
+                />
             ))}
             {selectionFab}
-        </TabsWrapper>
+        </>
     );
 }

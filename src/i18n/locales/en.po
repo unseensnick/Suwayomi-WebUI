@@ -718,6 +718,10 @@ msgstr "Categories"
 msgid "Category"
 msgstr "Category"
 
+#: src/features/library/components/CategorySection.tsx
+msgid "Category is empty"
+msgstr "Category is empty"
+
 #: src/features/category/components/CreateOrEditCategoryDialog.tsx
 msgid "Category Name"
 msgstr "Category Name"
@@ -848,6 +852,10 @@ msgstr "Close"
 #: src/features/settings/screens/ServerSettings.tsx
 msgid "Cloudflare bypass"
 msgstr "Cloudflare bypass"
+
+#: src/features/library/components/CategorySection.tsx
+msgid "Collapse category"
+msgstr "Collapse category"
 
 #: src/features/reader/filters/settings/components/ReaderSettingRGBA.tsx
 msgid "Color filter blend mode"
@@ -1007,7 +1015,7 @@ msgstr "Could not load language"
 msgid "Could not load latest track info from tracker"
 msgstr "Could not load latest track info from tracker"
 
-#: src/features/library/screens/Library.tsx
+#: src/features/library/components/CategorySection.tsx
 #: src/features/manga/screens/Manga.tsx
 msgid "Could not load manga"
 msgstr "Could not load manga"
@@ -1542,6 +1550,10 @@ msgstr "Exit to manga page"
 #: src/features/reader/viewer/components/ReaderTransitionPage.tsx
 msgid "Exit to previous page"
 msgstr "Exit to previous page"
+
+#: src/features/library/components/CategorySection.tsx
+msgid "Expand category"
+msgstr "Expand category"
 
 #: src/features/browse/screens/Browse.tsx
 msgid "Extension"
@@ -3444,7 +3456,7 @@ msgstr "The address of the FlareSolverr server"
 msgid "The cache of the client (browser, electron) should get cleared alongside it, otherwise, the client cache will keep getting used"
 msgstr "The cache of the client (browser, electron) should get cleared alongside it, otherwise, the client cache will keep getting used"
 
-#: src/features/library/screens/Library.tsx
+#: src/features/library/components/CategorySection.tsx
 msgid "The category is empty"
 msgstr "The category is empty"
 
