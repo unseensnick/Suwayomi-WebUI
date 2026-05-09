@@ -23,6 +23,7 @@ import { TypographyMaxLines } from '@/base/components/texts/TypographyMaxLines.t
 import { MANGA_COVER_ASPECT_RATIO } from '@/features/manga/Manga.constants.ts';
 import { GridLayout } from '@/base/Base.types.ts';
 import { MediaQuery } from '@/base/utils/MediaQuery.tsx';
+import { useMangaCardContextMenu } from '@/features/manga/hooks/useMangaCardContextMenu.ts';
 
 const BottomGradient = styled('div')({
     position: 'absolute',
@@ -56,8 +57,8 @@ export const MangaGridCard = memo(
         mangaBadges,
         mode,
     }: SpecificMangaCardProps) => {
-        const preventMobileContextMenu = MediaQuery.usePreventMobileContextMenu();
         const optionButtonRef = useRef<HTMLButtonElement>(null);
+        const handleContextMenu = useMangaCardContextMenu(popupState, optionButtonRef);
 
         const { id, title } = manga;
 
@@ -68,7 +69,7 @@ export const MangaGridCard = memo(
                 onClick={handleClick}
                 to={mangaLinkTo}
                 state={Mangas.createLocationState(manga, mode)}
-                onContextMenu={preventMobileContextMenu}
+                onContextMenu={handleContextMenu}
                 sx={{
                     ...MediaQuery.preventMobileContextMenuSx(),
                     textDecoration: 'none',
@@ -102,6 +103,7 @@ export const MangaGridCard = memo(
                             // force standard aspect ratio of manga covers
                             aspectRatio: MANGA_COVER_ASPECT_RATIO,
                             display: 'flex',
+                            position: 'relative',
                         }}
                     >
                         <CardActionArea
@@ -136,21 +138,12 @@ export const MangaGridCard = memo(
                                 direction="row"
                                 sx={{
                                     alignItems: 'start',
-                                    justifyContent: 'space-between',
                                     position: 'absolute',
                                     top: (theme) => theme.spacing(1),
                                     left: (theme) => theme.spacing(1),
-                                    right: (theme) => theme.spacing(1),
                                 }}
                             >
                                 {mangaBadges}
-                                <MangaOptionButton
-                                    ref={optionButtonRef}
-                                    popupState={popupState}
-                                    id={id}
-                                    selected={selected}
-                                    handleSelection={handleSelection}
-                                />
                             </Stack>
                             <>
                                 {gridLayout !== GridLayout.Comfortable && (
@@ -188,6 +181,22 @@ export const MangaGridCard = memo(
                                 </Stack>
                             </>
                         </CardActionArea>
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: (theme) => theme.spacing(1),
+                                right: (theme) => theme.spacing(1),
+                                zIndex: 1,
+                            }}
+                        >
+                            <MangaOptionButton
+                                ref={optionButtonRef}
+                                popupState={popupState}
+                                id={id}
+                                selected={selected}
+                                handleSelection={handleSelection}
+                            />
+                        </Box>
                     </Card>
                     {gridLayout === GridLayout.Comfortable && (
                         <Stack sx={{ pb: 1 }}>

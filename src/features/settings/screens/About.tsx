@@ -99,6 +99,7 @@ export function About() {
                                 url={selectedServerChannelInfo?.url ?? ''}
                             />
                         }
+                        slotProps={{ secondary: { component: 'div' } }}
                     />
                 </ListItem>
                 <ListItem>
@@ -139,6 +140,7 @@ export function About() {
                                 updateState={webUIUpdateState}
                             />
                         }
+                        slotProps={{ secondary: { component: 'div' } }}
                     />
                 </ListItem>
             </List>

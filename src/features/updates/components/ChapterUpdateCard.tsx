@@ -25,24 +25,28 @@ export const ChapterUpdateCard = memo(({ chapter }: { chapter: ChapterUpdateList
     const { manga } = chapter;
 
     return (
-        <Card>
+        <Card sx={{ display: 'flex', alignItems: 'stretch' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', pl: 1 }}>
+                <ChapterCardThumbnail
+                    mangaId={manga.id}
+                    sourceId={manga.sourceId}
+                    mangaTitle={manga.title}
+                    thumbnailUrl={manga.thumbnailUrl}
+                    thumbnailUrlLastFetched={manga.thumbnailUrlLastFetched}
+                />
+            </Box>
             <CardActionArea
                 component={Link}
                 to={AppRoutes.reader.path(chapter.manga.id, chapter.sourceOrder)}
                 state={Chapters.getReaderOpenChapterLocationState(chapter)}
                 sx={{
+                    flex: 1,
+                    minWidth: 0,
                     color: (theme) => theme.palette.text[chapter.isRead ? 'disabled' : 'primary'],
                 }}
             >
                 <ListCardContent sx={{ justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', flexGrow: 1, gap: 1 }}>
-                        <ChapterCardThumbnail
-                            mangaId={manga.id}
-                            sourceId={manga.sourceId}
-                            mangaTitle={manga.title}
-                            thumbnailUrl={manga.thumbnailUrl}
-                            thumbnailUrlLastFetched={manga.thumbnailUrlLastFetched}
-                        />
                         <ChapterCardMetadata title={manga.title} secondaryText={chapter.name} />
                     </Box>
                     <DownloadStateIndicator chapterId={chapter.id} />

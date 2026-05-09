@@ -19,4 +19,20 @@ declare module '@mui/material/styles' {
         defaultChannel: string;
         paperChannel: string;
     }
+
+    // Custom monospace typography slot. Themes may set
+    // `typography.monospace.fontFamily` (and weight variants) so the
+    // ThemeFontLoader picks them up at startup; components consume it
+    // via `theme.typography.monospace.fontFamily` in their `sx` props.
+    interface MonospaceTypography {
+        fontFamily: string;
+        fontWeightRegular?: number;
+        fontWeightMedium?: number;
+    }
+    interface TypographyVariantsOptions {
+        monospace?: Partial<MonospaceTypography>;
+    }
+    interface TypographyVariants {
+        monospace: MonospaceTypography;
+    }
 }

@@ -408,8 +408,15 @@ export const App: React.FC = () => (
                 <BackgroundSubscriptions />
                 <ResumeMigration />
 
-                <Box sx={{ display: 'flex' }}>
-                    <Box sx={{ flexShrink: 0, position: 'relative', height: '100vh' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                    {/*
+                     * Sticky positioning keeps the sidebar pinned to the viewport
+                     * while the body scrolls — fixes the bug where the sidebar
+                     * scrolled out of view on long pages (e.g. the manga detail
+                     * chapter list). Stays inside the document flow so Virtuoso's
+                     * `useWindowScroll` callers continue to work.
+                     */}
+                    <Box sx={{ flexShrink: 0, position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start' }}>
                         <DefaultNavBar />
                     </Box>
                     <Routes>
