@@ -412,4 +412,62 @@ export const themes = {
             },
         },
     },
+    sage: {
+        // Companion theme to the Suwayomi-WebUI redesign — "Plex with personality":
+        // sage-green accent on a cool deep-gray base, Geist Sans + Geist Mono throughout,
+        // hairline-soft borders, image-forward content. Designed for dark mode; the light
+        // scheme is provided for completeness but mirrors the dark palette.
+        isCustom: false,
+        getName: () => t`Sage`,
+        muiTheme: {
+            typography: {
+                fontFamily: '"Geist", system-ui, -apple-system, sans-serif',
+                fontWeightLight: 300,
+                fontWeightRegular: 400,
+                fontWeightMedium: 500,
+                fontWeightBold: 600,
+                // Mono family — referenced via theme.typography.monospace.fontFamily
+                // in components that show numerals, eyebrow labels, and meta text.
+                // ThemeFontLoader extracts this nested fontFamily + weights and pulls
+                // Geist Mono from Google Fonts at startup.
+                monospace: {
+                    fontFamily: '"Geist Mono", ui-monospace, "SF Mono", monospace',
+                    fontWeightRegular: 400,
+                    fontWeightMedium: 500,
+                },
+            },
+            colorSchemes: {
+                light: {
+                    palette: {
+                        primary: {
+                            main: '#5a8a78',
+                        },
+                        secondary: {
+                            main: '#7a7e88',
+                        },
+                        background: {
+                            paper: '#f4f1ea',
+                            default: '#faf8f3',
+                        },
+                    },
+                },
+                dark: {
+                    palette: {
+                        primary: {
+                            main: '#92c4b5',
+                            light: '#a9d4c7',
+                            dark: '#6fa193',
+                        },
+                        secondary: {
+                            main: '#7a7e88',
+                        },
+                        background: {
+                            paper: '#14181f',
+                            default: '#0d0f13',
+                        },
+                    },
+                },
+            },
+        },
+    },
 } as const satisfies Record<string, TBaseTheme>;
