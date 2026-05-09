@@ -33,11 +33,14 @@ import { useNavBarContext } from '@/features/navigation-bar/NavbarContext.tsx';
  *
  * - Pulls `GET_CATEGORIES_LIBRARY` (same source the Library page uses); hides
  *   id=0 when empty, mirroring `Library.tsx`'s tab-list filter.
- * - Each item links to `AppRoutes.library.path(String(id))` (= the existing
- *   `?tab=` URL convention); the in-library tab strip stays the source of truth
- *   for which category is active until PR 3 swaps to a stacked layout.
- * - Active marker only lights up when the user is on `/library` AND the active
- *   tab matches.
+ * - Click behavior depends on the current route:
+ *   - On `/library`: scrolls the page to the section anchor (`#cat-<id>`)
+ *     without changing the URL — the library renders all categories stacked.
+ *   - Anywhere else: navigates to `/library?tab=<id>` so the URL still carries
+ *     the chosen category through the route change. Once on the library, the
+ *     tab param is unused but harmless; it lets the active marker stay lit.
+ * - Active marker lights up when on `/library` AND the URL's `?tab=` matches.
+ *   Last-clicked category stays "active" until the user clicks another.
  * - Filter input narrows visible items by name (case-insensitive).
  * - Collapsed rail: shows a single-letter mark instead of the full name.
  */
@@ -136,11 +139,21 @@ export const CategoryNavList = () => {
                 {visibleCategories.map((category) => {
                     const isActive = isOnLibrary && tabSearchParam === category.id;
                     const mark = (category.name.trim()[0] ?? '?').toUpperCase();
+                    const handleClick = (e: React.MouseEvent) => {
+                        if (isOnLibrary) {
+                            const target = document.getElementById(`cat-${category.id}`);
+                            if (target) {
+                                e.preventDefault();
+                                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    };
                     return (
                         <ListItem key={category.id} disablePadding>
                             <CustomTooltip title={category.name} placement="right">
                                 <ListItemLink
                                     to={AppRoutes.library.path(String(category.id))}
+                                    onClick={handleClick}
                                     selected={isActive}
                                     sx={{
                                         borderRadius: 1,
