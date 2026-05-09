@@ -1635,6 +1635,10 @@ msgstr "Filter"
 msgid "Filter and sort"
 msgstr "Filter and sort"
 
+#: src/features/navigation-bar/components/CategoryNavList.tsx
+msgid "Filter categories…"
+msgstr "Filter categories…"
+
 #: src/features/settings/screens/ServerSettings.tsx
 msgid "Filter manga feed to display only chapters you have downloaded."
 msgstr "Filter manga feed to display only chapters you have downloaded."
@@ -2112,6 +2116,7 @@ msgstr "legacy backups are not supported!"
 #: src/features/backup/Backup.constants.ts
 #: src/features/library/screens/Library.tsx
 #: src/features/library/screens/LibrarySettings.tsx
+#: src/features/navigation-bar/components/CategoryNavList.tsx
 #: src/features/navigation-bar/NavigationBar.constants.ts
 #: src/features/settings/screens/Settings.tsx
 msgid "Library"
@@ -2423,6 +2428,10 @@ msgstr "Next page"
 #: src/features/reader/viewer/components/ReaderTransitionPage.tsx
 msgid "Next:"
 msgstr "Next:"
+
+#: src/features/navigation-bar/components/CategoryNavList.tsx
+msgid "No categories match"
+msgstr "No categories match"
 
 #: src/features/chapter/components/ChapterList.tsx
 msgid "No chapters found"

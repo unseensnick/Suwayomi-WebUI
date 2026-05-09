@@ -11,6 +11,7 @@ import List from '@mui/material/List';
 import IconButton from '@mui/material/IconButton';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MenuIcon from '@mui/icons-material/Menu';
 import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import { useCallback, useRef } from 'react';
@@ -20,6 +21,7 @@ import { useNavBarContext } from '@/features/navigation-bar/NavbarContext.tsx';
 import { useResizeObserver } from '@/base/hooks/useResizeObserver.tsx';
 import type { NavbarItem } from '@/features/navigation-bar/NavigationBar.types.ts';
 import { NavigationBarItem } from '@/features/navigation-bar/components/NavigationBarItem.tsx';
+import { CategoryNavList } from '@/features/navigation-bar/components/CategoryNavList.tsx';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
@@ -66,15 +68,31 @@ export const DesktopSideBar = ({ navBarItems }: { navBarItems: NavbarItem[] }) =
                     pl: 'env(safe-area-inset-left)',
                     minWidth: isCollapsed ? MIN_WIDTH_COLLAPSED : MIN_WIDTH_EXTENDED,
                     maxWidth: isCollapsed ? MAX_WIDTH_COLLAPSED : MAX_WIDTH_EXTENDED,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                 }}
             >
-                <DrawerHeader>
-                    <IconButton onClick={() => setIsCollapsed(true)}>
-                        {getOptionForDirection(<ChevronLeftIcon />, <ChevronRightIcon />)}
+                <DrawerHeader sx={{ justifyContent: isCollapsed ? 'center' : 'flex-end' }}>
+                    {/*
+                     * Toggle, not just collapse. Previously this only set
+                     * isCollapsed=true, leaving no in-rail way to expand again.
+                     * The icon flips: chevrons when expanded, hamburger when
+                     * collapsed (so the collapsed rail still has a visible
+                     * affordance to expand).
+                     */}
+                    <IconButton onClick={() => setIsCollapsed(!isCollapsed)} aria-label="toggle sidebar">
+                        {isCollapsed ? <MenuIcon /> : getOptionForDirection(<ChevronLeftIcon />, <ChevronRightIcon />)}
                     </IconButton>
                 </DrawerHeader>
                 <Divider />
-                <List sx={{ p: 1 }} dense={isCollapsed}>
+
+                {/* Library categories — scrolls in its own region inside the rail */}
+                <CategoryNavList />
+
+                <Divider />
+
+                <List sx={{ p: 1, flexShrink: 0 }} dense={isCollapsed}>
                     {navBarItems.map((navBarItem) => (
                         <NavigationBarItem key={navBarItem.path} {...navBarItem} />
                     ))}
