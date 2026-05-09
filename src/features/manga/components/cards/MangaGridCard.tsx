@@ -104,6 +104,16 @@ export const MangaGridCard = memo(
                             aspectRatio: MANGA_COVER_ASPECT_RATIO,
                             display: 'flex',
                             position: 'relative',
+                            transition:
+                                'transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            // Subtle lift on hover for desktop pointing devices —
+                            // image-forward affordance matching the redesign mockup.
+                            '@media (hover: hover) and (pointer: fine)': {
+                                '&:hover': {
+                                    transform: 'translateY(-3px)',
+                                    boxShadow: 6,
+                                },
+                            },
                         }}
                     >
                         <CardActionArea

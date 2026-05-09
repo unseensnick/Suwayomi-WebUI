@@ -18,13 +18,28 @@ import { MUIUtil } from '@/lib/mui/MUI.util.ts';
 const BadgeContainer = styled('div')(({ theme }) => ({
     display: 'flex',
     height: 'fit-content',
-    borderRadius: theme.shape.borderRadius,
-    overflow: 'hidden',
+    gap: theme.spacing(0.5),
 }));
 
-const Badge = styled(Typography)(({ theme }) => ({
-    color: theme.palette.primary.contrastText,
-    paddingInline: theme.spacing(0.3),
+// Mono-numeral pill. Smaller, tabular-nums, rounded — designed to read like
+// a status chip (matches the Sage redesign mockup) without changing the
+// component's API. Themes that don't define `typography.monospace` fall back
+// to the platform monospace stack.
+const Badge = styled(Typography, { shouldForwardProp: (prop) => prop !== 'badgeColor' })<{
+    badgeColor?: 'primary' | 'secondary';
+}>(({ theme, badgeColor = 'primary' }) => ({
+    fontFamily: theme.typography.monospace?.fontFamily ?? 'monospace',
+    fontVariantNumeric: 'tabular-nums',
+    fontSize: '0.8rem',
+    fontWeight: 500,
+    lineHeight: 1,
+    paddingInline: theme.spacing(1),
+    paddingBlock: theme.spacing(0.6),
+    minWidth: theme.spacing(2.75),
+    textAlign: 'center',
+    borderRadius: 999,
+    color: theme.palette[badgeColor].contrastText,
+    backgroundColor: theme.palette[badgeColor].main,
 }));
 
 export const MangaBadges = ({
@@ -81,17 +96,10 @@ export const MangaBadges = ({
                 </Typography>
             )}
             {((showUnreadBadge && mode === 'default') || mode === 'duplicate') && (unread ?? 0) > 0 && (
-                <Badge sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText' }}>{unread}</Badge>
+                <Badge badgeColor="primary">{unread}</Badge>
             )}
             {((showDownloadBadge && mode === 'default') || mode === 'duplicate') && (downloadCount ?? 0) > 0 && (
-                <Badge
-                    sx={{
-                        backgroundColor: 'secondary.main',
-                        color: 'secondary.contrastText',
-                    }}
-                >
-                    {downloadCount}
-                </Badge>
+                <Badge badgeColor="secondary">{downloadCount}</Badge>
             )}
         </BadgeContainer>
     );
