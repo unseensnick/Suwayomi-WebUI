@@ -16,7 +16,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import type { GroupedVirtuosoHandle, ListRange } from 'react-virtuoso';
+import type { GroupedVirtuosoHandle } from 'react-virtuoso';
 import { GroupedVirtuosoPersisted } from '@/lib/virtuoso/Component/GroupedVirtuosoPersisted.tsx';
 import { requestManager } from '@/lib/requests/RequestManager.ts';
 import { EmptyViewAbsoluteCentered } from '@/base/components/feedback/EmptyViewAbsoluteCentered.tsx';
@@ -24,6 +24,7 @@ import { LoadingPlaceholder } from '@/base/components/feedback/LoadingPlaceholde
 import { LibraryToolbarMenu } from '@/features/library/components/LibraryToolbarMenu.tsx';
 import { CategoryDataLoader } from '@/features/library/components/CategoryDataLoader.tsx';
 import { CategoryHeader } from '@/features/library/components/CategoryHeader.tsx';
+import { CategoryHopperFab } from '@/features/library/components/CategoryHopperFab.tsx';
 import { AppbarSearch } from '@/base/components/AppbarSearch.tsx';
 import { UpdateChecker } from '@/features/updates/components/UpdateChecker.tsx';
 import { useSelectableCollection } from '@/base/collection/hooks/useSelectableCollection.ts';
@@ -52,6 +53,7 @@ import { GridLayout, SearchParam } from '@/base/Base.types.ts';
 import { useNavBarContext } from '@/features/navigation-bar/NavbarContext.tsx';
 import { useResizeObserver } from '@/base/hooks/useResizeObserver.tsx';
 import { LibraryScrollService } from '@/features/library/services/LibraryScrollService.ts';
+import { MediaQuery } from '@/base/utils/MediaQuery.tsx';
 
 const TitleWithSizeTag = styled('span')({
     display: 'flex',
@@ -108,9 +110,13 @@ const chunk = <T,>(arr: T[], size: number): T[][] => {
  *   manga across all sections (Yokai's global ActionMode pattern).
  *
  * Toolbar (filter/sort/refresh):
- * - Tracks the in-view category via scrollspy (`rangeChanged` → flat-index →
- *   group). The toolbar's filter/sort modal and update checker target whichever
- *   section the user is currently looking at. Per-section sort buttons in
+ * - Tracks the in-view category via DOM-based scrollspy: each rendered
+ *   `[data-cat-id]` header's `getBoundingClientRect().top` is checked
+ *   against `appBarHeight`; the last header below the bar's bottom edge
+ *   is "active". (Virtuoso's `rangeChanged` ignores the AppBar and would
+ *   report whatever's hidden behind it, one group too early.) The
+ *   toolbar's filter/sort modal and update checker target whichever
+ *   section the user is currently looking at; per-section sort buttons in
  *   headers cover the per-category-without-leaving-the-section case.
  *
  * Scroll restoration:
@@ -119,11 +125,17 @@ const chunk = <T,>(arr: T[], size: number): T[][] => {
  *   same row instead of the top of the library. Persistence keys off the
  *   single `'library-stack'` snapshot — possible because there's now only
  *   one Virtuoso on the page.
+ *
+ * Mobile section navigation:
+ * - There's no sidebar on mobile. `CategoryHopperFab` floats above the
+ *   bottom bar with prev/list/next controls so power users with many
+ *   categories can jump between sections without long scrolling.
  */
 export function Library() {
     const { t } = useLingui();
     const theme = useTheme();
-    const { navBarWidth } = useNavBarContext();
+    const { navBarWidth, appBarHeight } = useNavBarContext();
+    const isMobileWidth = MediaQuery.useIsMobileWidth();
 
     const {
         settings: { showTabSize, gridLayout, mangaGridItemWidth },
@@ -335,43 +347,87 @@ export function Library() {
         [query, t],
     );
 
-    // Scrollspy: track which category is currently topmost in the viewport so
-    // the toolbar's filter/sort/refresh actions target what the user is
-    // looking at. `rangeChanged` gives a flat index across [H0, I0_0, ...,
-    // I0_n, H1, I1_0, ...]; each group spans `1 + groupCounts[i]` entries.
+    // Scrollspy: track which category is currently topmost VISUALLY (i.e.,
+    // just below the AppBar), so the toolbar and the mobile hopper agree
+    // with what the user actually sees.
+    //
+    // Why DOM-based instead of `rangeChanged`: with `useWindowScroll`,
+    // Virtuoso reports the topmost item at `scrollY = 0`, but that area is
+    // covered by the fixed AppBar. The user is visually looking one group
+    // further down. We probe each rendered `[data-cat-id]` header's
+    // `getBoundingClientRect().top` against `appBarHeight` and pick the
+    // last header that has scrolled into or past the bar.
     const [activeGroupIndex, setActiveGroupIndex] = useState(0);
     useEffect(() => {
         setActiveGroupIndex((prev) => (prev >= categories.length ? 0 : prev));
     }, [categories.length]);
-    const handleRangeChanged = useCallback(
-        (range: ListRange) => {
-            let acc = 0;
-            for (let i = 0; i < groupCounts.length; i++) {
-                const span = 1 + groupCounts[i];
-                if (range.startIndex < acc + span) {
-                    setActiveGroupIndex((prev) => (prev === i ? prev : i));
-                    return;
-                }
-                acc += span;
+
+    const updateActiveGroupFromDom = useCallback(() => {
+        const headers = document.querySelectorAll<HTMLElement>('[data-cat-id]');
+        if (headers.length === 0) {
+            return;
+        }
+        // Boundary: just below the AppBar. A small epsilon makes the switch
+        // happen as the next header touches the bar rather than after it
+        // crosses fully.
+        const boundary = appBarHeight + 1;
+        let activeId: number | null = null;
+        for (let i = 0; i < headers.length; i++) {
+            const el = headers[i];
+            if (el.getBoundingClientRect().top <= boundary) {
+                activeId = Number(el.dataset.catId);
+            } else {
+                break;
             }
-        },
-        [groupCounts],
-    );
+        }
+        if (activeId == null) {
+            return;
+        }
+        const idx = categories.findIndex((c) => c.id === activeId);
+        if (idx < 0) {
+            return;
+        }
+        setActiveGroupIndex((prev) => (prev === idx ? prev : idx));
+    }, [appBarHeight, categories]);
+
+    useEffect(() => {
+        const onScroll = () => updateActiveGroupFromDom();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // Run once after mount to sync with restored snapshot or initial top.
+        const raf = requestAnimationFrame(updateActiveGroupFromDom);
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            cancelAnimationFrame(raf);
+        };
+    }, [updateActiveGroupFromDom]);
+
     const toolbarCategory = categories[activeGroupIndex] ?? categories[0];
 
-    // Virtuoso ref for sidebar-driven scroll. Native group support: scrolling
-    // to a category just becomes `scrollToIndex({ groupIndex })`.
+    // Virtuoso ref. `scrollToIndex` with `offset: -appBarHeight` lands the
+    // target group's header just below the bar instead of behind it.
     const virtuosoRef = useRef<GroupedVirtuosoHandle>(null);
+    const scrollToGroup = useCallback(
+        (groupIndex: number, behavior: 'auto' | 'smooth' = 'smooth') => {
+            virtuosoRef.current?.scrollToIndex({
+                groupIndex,
+                align: 'start',
+                offset: -appBarHeight,
+                behavior,
+            });
+        },
+        [appBarHeight],
+    );
+
     useEffect(() => {
         LibraryScrollService.setHandler((categoryId) => {
             const groupIndex = categories.findIndex((c) => c.id === categoryId);
             if (groupIndex < 0) {
                 return;
             }
-            virtuosoRef.current?.scrollToIndex({ groupIndex, align: 'start', behavior: 'smooth' });
+            scrollToGroup(groupIndex);
         });
         return () => LibraryScrollService.setHandler(null);
-    }, [categories]);
+    }, [categories, scrollToGroup]);
 
     // Cross-route entry: clicking a sidebar category from outside `/library`
     // navigates to `/library?tab=<id>`. On mount, scroll to that section
@@ -406,10 +462,8 @@ export function Library() {
         }
 
         // Defer one frame so the GroupedVirtuoso has measured group sizes.
-        requestAnimationFrame(() => {
-            virtuosoRef.current?.scrollToIndex({ groupIndex: idx, align: 'start' });
-        });
-    }, [tabParam, categories, location.key]);
+        requestAnimationFrame(() => scrollToGroup(idx, 'auto'));
+    }, [tabParam, categories, location.key, scrollToGroup]);
 
     useAppTitle(
         <TitleWithSizeTag>
@@ -493,7 +547,6 @@ export function Library() {
                     ref={virtuosoRef}
                     useWindowScroll
                     increaseViewportBy={Math.max(400, window.innerHeight * 0.5)}
-                    rangeChanged={handleRangeChanged}
                     groupCounts={groupCounts}
                     groupContent={(groupIndex) => {
                         const category = categories[groupIndex];
@@ -545,6 +598,19 @@ export function Library() {
             </Box>
 
             {selectionFab}
+
+            {/*
+             * Mobile-only: section-jump pill. The desktop sidebar already
+             * gives jump-nav, and the SelectionFAB owns the bottom-right
+             * during selection mode.
+             */}
+            {isMobileWidth && !isSelectModeActive && (
+                <CategoryHopperFab
+                    categories={categories}
+                    activeGroupIndex={activeGroupIndex}
+                    onJump={(idx) => scrollToGroup(idx)}
+                />
+            )}
         </>
     );
 }
