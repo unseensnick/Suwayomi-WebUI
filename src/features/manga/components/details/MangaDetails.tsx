@@ -257,7 +257,16 @@ export const MangaDetails = ({
                     <MetadataContainer>
                         <Stack sx={{ flexDirection: 'row', gap: 1, alignItems: 'flex-start', mb: 1 }}>
                             <SearchLink query={manga.title} sourceId={manga.sourceId} mode="source.global-search">
-                                <Typography variant="h5" component="h2" sx={{ wordBreak: 'break-word' }}>
+                                <Typography
+                                    variant="h4"
+                                    component="h2"
+                                    sx={{
+                                        wordBreak: 'break-word',
+                                        fontWeight: 600,
+                                        lineHeight: 1.15,
+                                        letterSpacing: '-0.01em',
+                                    }}
+                                >
                                     {manga.title}
                                 </Typography>
                             </SearchLink>
