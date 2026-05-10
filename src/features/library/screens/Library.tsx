@@ -10,14 +10,14 @@ import type { ChipProps } from '@mui/material/Chip';
 import Chip from '@mui/material/Chip';
 import { styled, useTheme } from '@mui/material/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StringParam, useQueryParam } from 'use-query-params';
+import { NumberParam, StringParam, useQueryParam } from 'use-query-params';
 import Button from '@mui/material/Button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import type { GroupedVirtuosoHandle } from 'react-virtuoso';
-import { GroupedVirtuoso } from 'react-virtuoso';
+import type { GroupedVirtuosoHandle, ListRange } from 'react-virtuoso';
+import { GroupedVirtuosoPersisted } from '@/lib/virtuoso/Component/GroupedVirtuosoPersisted.tsx';
 import { requestManager } from '@/lib/requests/RequestManager.ts';
 import { EmptyViewAbsoluteCentered } from '@/base/components/feedback/EmptyViewAbsoluteCentered.tsx';
 import { LoadingPlaceholder } from '@/base/components/feedback/LoadingPlaceholder.tsx';
@@ -67,9 +67,13 @@ type LibraryManga = NonNullable<
 >['mangas']['nodes'][number];
 
 const chunk = <T,>(arr: T[], size: number): T[][] => {
-    if (size <= 1) {return arr.map((x) => [x]);}
+    if (size <= 1) {
+        return arr.map((x) => [x]);
+    }
     const out: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) {out.push(arr.slice(i, i + size));}
+    for (let i = 0; i < arr.length; i += size) {
+        out.push(arr.slice(i, i + size));
+    }
     return out;
 };
 
@@ -104,9 +108,17 @@ const chunk = <T,>(arr: T[], size: number): T[][] => {
  *   manga across all sections (Yokai's global ActionMode pattern).
  *
  * Toolbar (filter/sort/refresh):
- * - Targets the first category as a stable placeholder. Per-section sort
- *   buttons in headers + scrollspy that pins the toolbar to the in-view
- *   category land in a follow-up PR.
+ * - Tracks the in-view category via scrollspy (`rangeChanged` → flat-index →
+ *   group). The toolbar's filter/sort modal and update checker target whichever
+ *   section the user is currently looking at. Per-section sort buttons in
+ *   headers cover the per-category-without-leaving-the-section case.
+ *
+ * Scroll restoration:
+ * - `GroupedVirtuosoPersisted` snapshots scroll state per `location.key` in
+ *   sessionStorage; clicking a manga then hitting back lands the user at the
+ *   same row instead of the top of the library. Persistence keys off the
+ *   single `'library-stack'` snapshot — possible because there's now only
+ *   one Virtuoso on the page.
  */
 export function Library() {
     const { t } = useLingui();
@@ -164,7 +176,9 @@ export function Library() {
             let next = prev;
             for (const c of categories) {
                 if (c.mangas.totalCount === 0 && !prev.has(c.id)) {
-                    if (next === prev) {next = new Set(prev);}
+                    if (next === prev) {
+                        next = new Set(prev);
+                    }
                     next.add(c.id);
                 }
             }
@@ -175,8 +189,11 @@ export function Library() {
     const toggleCollapse = useCallback((categoryId: number) => {
         setCollapsedCategoryIds((prev) => {
             const next = new Set(prev);
-            if (next.has(categoryId)) {next.delete(categoryId);}
-            else {next.add(categoryId);}
+            if (next.has(categoryId)) {
+                next.delete(categoryId);
+            } else {
+                next.add(categoryId);
+            }
             return next;
         });
     }, []);
@@ -188,11 +205,15 @@ export function Library() {
         containerRef,
         useCallback(() => {
             const w = containerRef.current?.offsetWidth;
-            if (w) {setContainerWidth(w);}
+            if (w) {
+                setContainerWidth(w);
+            }
         }, []),
     );
     const itemsPerRow = useMemo(() => {
-        if (gridLayout === GridLayout.List) {return 1;}
+        if (gridLayout === GridLayout.List) {
+            return 1;
+        }
         return Math.max(1, Math.floor(containerWidth / Math.max(80, mangaGridItemWidth)));
     }, [containerWidth, gridLayout, mangaGridItemWidth]);
 
@@ -232,7 +253,9 @@ export function Library() {
     const allMangaIds = useMemo(() => {
         const set = new Set<MangaType['id']>();
         for (const c of categories) {
-            for (const m of mangasByCategory[c.id] ?? []) {set.add(m.id);}
+            for (const m of mangasByCategory[c.id] ?? []) {
+                set.add(m.id);
+            }
         }
         return Array.from(set);
     }, [categories, mangasByCategory]);
@@ -312,7 +335,29 @@ export function Library() {
         [query, t],
     );
 
-    const [toolbarCategory] = categories;
+    // Scrollspy: track which category is currently topmost in the viewport so
+    // the toolbar's filter/sort/refresh actions target what the user is
+    // looking at. `rangeChanged` gives a flat index across [H0, I0_0, ...,
+    // I0_n, H1, I1_0, ...]; each group spans `1 + groupCounts[i]` entries.
+    const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+    useEffect(() => {
+        setActiveGroupIndex((prev) => (prev >= categories.length ? 0 : prev));
+    }, [categories.length]);
+    const handleRangeChanged = useCallback(
+        (range: ListRange) => {
+            let acc = 0;
+            for (let i = 0; i < groupCounts.length; i++) {
+                const span = 1 + groupCounts[i];
+                if (range.startIndex < acc + span) {
+                    setActiveGroupIndex((prev) => (prev === i ? prev : i));
+                    return;
+                }
+                acc += span;
+            }
+        },
+        [groupCounts],
+    );
+    const toolbarCategory = categories[activeGroupIndex] ?? categories[0];
 
     // Virtuoso ref for sidebar-driven scroll. Native group support: scrolling
     // to a category just becomes `scrollToIndex({ groupIndex })`.
@@ -320,11 +365,51 @@ export function Library() {
     useEffect(() => {
         LibraryScrollService.setHandler((categoryId) => {
             const groupIndex = categories.findIndex((c) => c.id === categoryId);
-            if (groupIndex < 0) {return;}
+            if (groupIndex < 0) {
+                return;
+            }
             virtuosoRef.current?.scrollToIndex({ groupIndex, align: 'start', behavior: 'smooth' });
         });
         return () => LibraryScrollService.setHandler(null);
     }, [categories]);
+
+    // Cross-route entry: clicking a sidebar category from outside `/library`
+    // navigates to `/library?tab=<id>`. On mount, scroll to that section
+    // (handled here for the initial-mount case; same-page clicks go through
+    // `LibraryScrollService` and short-circuit the URL change).
+    //
+    // Skipped when a sessionStorage snapshot exists for this `location.key` —
+    // back-navigation from the manga detail page restores the prior scroll
+    // position via `GroupedVirtuosoPersisted`, and we don't want a tab-scroll
+    // to overwrite it.
+    const [tabParam] = useQueryParam(SearchParam.TAB, NumberParam);
+    const location = useLocation();
+    const didInitialTabScrollRef = useRef(false);
+    useEffect(() => {
+        if (didInitialTabScrollRef.current) {
+            return;
+        }
+        if (tabParam == null || categories.length === 0) {
+            return;
+        }
+
+        didInitialTabScrollRef.current = true;
+
+        const snapshotKey = `virtuoso-snapshot-library-stack-${location.key}`;
+        if (sessionStorage.getItem(snapshotKey)) {
+            return;
+        }
+
+        const idx = categories.findIndex((c) => c.id === tabParam);
+        if (idx < 0) {
+            return;
+        }
+
+        // Defer one frame so the GroupedVirtuoso has measured group sizes.
+        requestAnimationFrame(() => {
+            virtuosoRef.current?.scrollToIndex({ groupIndex: idx, align: 'start' });
+        });
+    }, [tabParam, categories, location.key]);
 
     useAppTitle(
         <TitleWithSizeTag>
@@ -356,8 +441,11 @@ export function Library() {
                     onSelectAll={(selectAll) => handleSelectAll(selectAll, allMangaIds)}
                     onModeChange={(checked) => {
                         setIsSelectModeActive(checked);
-                        if (checked) {handleSelectAll(true, allMangaIds);}
-                        else {handleSelectAll(false, []);}
+                        if (checked) {
+                            handleSelectAll(true, allMangaIds);
+                        } else {
+                            handleSelectAll(false, []);
+                        }
                     }}
                 />
             )}
@@ -400,10 +488,12 @@ export function Library() {
             {triggerGlobalSearchButton}
 
             <Box ref={containerRef}>
-                <GroupedVirtuoso
+                <GroupedVirtuosoPersisted
+                    persistKey="library-stack"
                     ref={virtuosoRef}
                     useWindowScroll
                     increaseViewportBy={Math.max(400, window.innerHeight * 0.5)}
+                    rangeChanged={handleRangeChanged}
                     groupCounts={groupCounts}
                     groupContent={(groupIndex) => {
                         const category = categories[groupIndex];

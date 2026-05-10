@@ -416,7 +416,24 @@ export const App: React.FC = () => (
                      * chapter list). Stays inside the document flow so Virtuoso's
                      * `useWindowScroll` callers continue to work.
                      */}
-                    <Box sx={{ flexShrink: 0, position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start' }}>
+                    {/*
+                     * `zIndex` keeps this wrapper (and the fixed AppBar inside
+                     * it) above sibling MainApp content. Without it, the
+                     * sticky-wrapper's stacking context paints first in DOM
+                     * order and MainApp's auto-z grid items render on top of
+                     * the bar — virtualized manga cards would visibly slip
+                     * over the top bar in the library page.
+                     */}
+                    <Box
+                        sx={{
+                            flexShrink: 0,
+                            position: 'sticky',
+                            top: 0,
+                            height: '100vh',
+                            alignSelf: 'flex-start',
+                            zIndex: (theme) => theme.zIndex.drawer + 1,
+                        }}
+                    >
                         <DefaultNavBar />
                     </Box>
                     <Routes>
