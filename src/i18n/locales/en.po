@@ -2016,6 +2016,10 @@ msgstr "item"
 msgid "Items per page"
 msgstr "Items per page"
 
+#: src/features/library/components/CategoryHopperFab.tsx
+msgid "Jump to category"
+msgstr "Jump to category"
+
 #: src/features/settings/screens/ServerSettings.tsx
 msgid "JWT access token expiry"
 msgstr "JWT access token expiry"
@@ -2427,6 +2431,10 @@ msgstr "New category"
 msgid "Next"
 msgstr "Next"
 
+#: src/features/library/components/CategoryHopperFab.tsx
+msgid "Next category"
+msgstr "Next category"
+
 #: src/features/reader/hotkeys/settings/components/ReaderSettingHotkey.tsx
 #: src/features/reader/overlay/navigation/desktop/components/ReaderNavBarDesktopChapterNavigation.tsx
 msgid "Next chapter"
@@ -2704,6 +2712,10 @@ msgstr "Preview"
 #: src/features/reader/tap-zones/ReaderTapZone.constants.ts
 msgid "Previous"
 msgstr "Previous"
+
+#: src/features/library/components/CategoryHopperFab.tsx
+msgid "Previous category"
+msgstr "Previous category"
 
 #: src/features/reader/hotkeys/settings/components/ReaderSettingHotkey.tsx
 #: src/features/reader/overlay/navigation/desktop/components/ReaderNavBarDesktopChapterNavigation.tsx

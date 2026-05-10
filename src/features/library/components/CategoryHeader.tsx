@@ -46,6 +46,7 @@ export const CategoryHeader = memo(
             <Stack
                 direction="row"
                 onClick={onToggle}
+                data-cat-id={category.id}
                 sx={{
                     alignItems: 'center',
                     gap: 1,
