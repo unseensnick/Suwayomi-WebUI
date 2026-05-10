@@ -30,6 +30,7 @@ import { useReaderHorizontalModeRevampScrolling } from '@/features/reader/viewer
 import { useReaderHideCursorOnInactivity } from '@/features/reader/viewer/hooks/useReaderHideCursorOnInactivity.ts';
 import { useReaderScrollToStartOnPageChange } from '@/features/reader/viewer/hooks/useReaderScrollToStartOnPageChange.ts';
 import { useReaderHandlePageSelection } from '@/features/reader/viewer/hooks/useReaderHandlePageSelection.ts';
+import { useReaderWheelOverscrollChapterAdvance } from '@/features/reader/viewer/hooks/useReaderWheelOverscrollChapterAdvance.ts';
 import { ReaderChapterViewer } from '@/features/reader/viewer/ReaderChapterViewer.tsx';
 import {
     getPreviousNextChapterVisibility,
@@ -95,6 +96,7 @@ const BaseReaderViewer = ({
         pageGap,
         customFilter,
         shouldStretchPage,
+        shouldUseInfiniteScroll,
         isStaticNav,
     } = useReaderSettingsStore((state) => ({
         readingMode: state.readingMode.value,
@@ -106,6 +108,7 @@ const BaseReaderViewer = ({
         pageGap: state.pageGap.value,
         customFilter: state.customFilter,
         shouldStretchPage: state.shouldStretchPage.value,
+        shouldUseInfiniteScroll: state.shouldUseInfiniteScroll,
         isStaticNav: state.isStaticNav,
     }));
     const { resumeMode = ReaderResumeMode.START } = useLocation<ReaderOpenChapterLocationState>().state ?? {
@@ -216,6 +219,7 @@ const BaseReaderViewer = ({
     useReaderHideCursorOnInactivity(scrollElementRef);
     useReaderHorizontalModeRevampScrolling(readingMode, readingDirection, scrollElementRef);
     useReaderHideOverlayOnUserScroll(isOverlayVisible, scrollElementRef);
+    useReaderWheelOverscrollChapterAdvance(scrollElementRef, readingMode, shouldUseInfiniteScroll);
     useReaderAutoScroll(isOverlayVisible, isStaticNav);
     useReaderPreserveScrollPosition(
         scrollElementRef,

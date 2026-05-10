@@ -60,6 +60,11 @@ export const DescriptionGenre = ({
                                 textAlign: 'justify',
                                 textJustify: 'inter-word',
                                 mb: OPEN_CLOSE_BUTTON_HEIGHT,
+                                // Cap line length for comfortable reading; synopsis copy was
+                                // running 100+ characters wide on desktop.
+                                maxWidth: '70ch',
+                                color: 'text.secondary',
+                                lineHeight: 1.6,
                             }}
                         >
                             {description}
@@ -95,7 +100,22 @@ export const DescriptionGenre = ({
             >
                 {genres.map((genre) => (
                     <SearchLink key={genre} query={genre} sourceId={sourceId} mode={mode}>
-                        <Chip label={genre} variant="outlined" onClick={() => {}} />
+                        <Chip
+                            label={genre}
+                            variant="outlined"
+                            size="small"
+                            onClick={() => {}}
+                            sx={{
+                                borderRadius: 999,
+                                fontFamily: (theme) => theme.typography.monospace?.fontFamily ?? 'monospace',
+                                fontSize: '0.7rem',
+                                letterSpacing: '0.06em',
+                                textTransform: 'uppercase',
+                                borderColor: 'divider',
+                                color: 'text.secondary',
+                                '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
+                            }}
+                        />
                     </SearchLink>
                 ))}
             </Stack>
